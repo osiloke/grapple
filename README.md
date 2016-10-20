@@ -4,7 +4,7 @@ Grapple can scrape data from multiple sources. It is designed to be lean, effici
 
 ## The examples
 
-### [page](page/) ([godoc](//godoc.org/github.com/grapple-examples/[page])) 
+### [page](//github.com/grapple-examples/page) ([godoc](//godoc.org/github.com/grapple-examples/[page])) 
 
     go get github.com/osiloke/grapple-examples/page
 
