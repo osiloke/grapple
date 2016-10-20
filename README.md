@@ -1,6 +1,6 @@
 # Grapple - data scraping toolkit
 
-Grapple can scrape data from multiple sources. It is designed to be lean, efficient, and hackable. It does not tie you into a certain paridgm of scraping. As a result, you can scrape and save to a file, scrape and send to a microservice, the possibilities are endless. 
+Grapple can scrape data from multiple sources. It is designed to be lean, efficient, and hackable. It does not tie you into a certain paradigm of scraping. As a result, you can scrape and save to a file, scrape and send to a microservice, the possibilities are endless. 
 
 ## The examples
 
