@@ -1,0 +1,18 @@
+package: github.com/osiloke/grapple
+import:
+- package: github.com/Jeffail/gabs
+- package: github.com/PuerkitoBio/goquery
+- package: github.com/codeskyblue/go-sh
+- package: github.com/cstockton/go-conv
+- package: github.com/mgutz/logxi
+  subpackages:
+  - v1
+- package: github.com/paulbellamy/ratecounter
+- package: github.com/robertkrimen/otto
+- package: github.com/stretchr/testify
+  subpackages:
+  - mock
+- package: github.com/ungerik/go-dry
+- package: golang.org/x/net
+  subpackages:
+  - proxy
