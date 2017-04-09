@@ -3,9 +3,10 @@ package scraper
 import (
 	"bytes"
 	"errors"
-	. "github.com/cstockton/go-conv"
 	"net/url"
 	"text/template"
+
+	. "github.com/cstockton/go-conv"
 )
 
 var ErrNoNextUrl = errors.New("no next url")
@@ -139,7 +140,9 @@ func NewJSONRestScraper(client Client, nextUrlTemplate, rowCountPath, dataPath s
 			return url.Query().Get(key)
 		},
 		"add": func(args ...interface{}) int {
-			return Int(args[0]) + Int(args[1])
+			v1, _ := Int(args[0])
+			v2, _ := Int(args[1])
+			return v1 + v2
 		},
 		"setParams": func(_url *url.URL, args ...interface{}) *url.URL {
 			// params := url.Values{}
@@ -148,7 +151,9 @@ func NewJSONRestScraper(client Client, nextUrlTemplate, rowCountPath, dataPath s
 			// }
 			params := _url.Query()
 			for i := 0; i < len(args); i += 2 {
-				params.Set(String(args[i]), String(args[i+1]))
+				s1, _ := String(args[i])
+				s2, _ := String(args[i+1])
+				params.Set(s1, s2)
 			}
 			_url.RawQuery = params.Encode()
 			return _url
