@@ -9,15 +9,24 @@ import (
 	//	"github.com/kennygrant/sanitize"
 	"encoding/json"
 	"fmt"
-	"github.com/robertkrimen/otto"
 	"os"
 	"regexp"
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/robertkrimen/otto"
 )
 
 var logger = log.NewLogger(log.NewConcurrentWriter(os.Stdout), "scraper")
+
+type TypeFormatter func(property *Schema, sel *goquery.Selection) interface{}
+
+var CUSTOM_TYPES = map[string]TypeFormatter{}
+
+func AddCustomType(name string, fn TypeFormatter) {
+	CUSTOM_TYPES[name] = fn
+}
 
 type JobStats struct {
 	TotalItems     ratecounter.Counter
@@ -54,7 +63,7 @@ type StopOn func(i int, item map[string]interface{}) bool
 func cleanText(val string) string {
 	return stringMinifier(removeInvalidUtf(val))
 }
-func stringValFromCssPath(path []string, node *goquery.Selection) (string, bool) {
+func StringValFromCssPath(path []string, node *goquery.Selection) (string, bool) {
 	var val string
 	if len(path) > 1 {
 		if v, ok := node.Attr(path[1]); !ok {
@@ -114,7 +123,7 @@ func (j *Job) getProperty(vm *otto.Otto, parentNode *goquery.Selection, property
 			}
 			return removeInvalidUtf(propertyNode.Text())
 		case IMAGE_PROPERTY:
-			if val, ok := stringValFromCssPath(property.CssPath, propertyNode); ok {
+			if val, ok := StringValFromCssPath(property.CssPath, propertyNode); ok {
 				return val
 			}
 			return nil
@@ -141,7 +150,7 @@ func (j *Job) getProperty(vm *otto.Otto, parentNode *goquery.Selection, property
 			}
 			return result
 		case STRING_PROPERTY:
-			if val, ok := stringValFromCssPath(property.CssPath, propertyNode); ok {
+			if val, ok := StringValFromCssPath(property.CssPath, propertyNode); ok {
 				return val
 			}
 			return nil
@@ -166,10 +175,10 @@ func (j *Job) getProperty(vm *otto.Otto, parentNode *goquery.Selection, property
 				)
 				if property.KeyPath[0] == "" {
 
-					key, ok = stringValFromCssPath(property.KeyPath, s.Clone().Children().Remove().End())
+					key, ok = StringValFromCssPath(property.KeyPath, s.Clone().Children().Remove().End())
 
 				} else {
-					key, ok = stringValFromCssPath(property.KeyPath, s.Find(property.KeyPath[0]).First())
+					key, ok = StringValFromCssPath(property.KeyPath, s.Find(property.KeyPath[0]).First())
 				}
 				if len(key) == 0 || !ok {
 					return true
@@ -177,7 +186,7 @@ func (j *Job) getProperty(vm *otto.Otto, parentNode *goquery.Selection, property
 				key = strings.ToLower(strings.Trim(dry.StringReplaceMulti(key, ",", "", ".", "", ":", " ", " ", "_"), "_"))
 				// key = dry.StringToLowerCamelCase(key)
 				//get val
-				val, ok := stringValFromCssPath(property.ValPath, s.Find(property.ValPath[0]).First())
+				val, ok := StringValFromCssPath(property.ValPath, s.Find(property.ValPath[0]).First())
 				if !ok {
 					return true
 				}
@@ -191,7 +200,10 @@ func (j *Job) getProperty(vm *otto.Otto, parentNode *goquery.Selection, property
 			})
 			return props
 		default:
-			if val, ok := stringValFromCssPath(property.CssPath, propertyNode); ok {
+			//check type formatters
+			if customType, ok := CUSTOM_TYPES[property.Type]; ok {
+				return customType(property, propertyNode)
+			} else if val, ok := StringValFromCssPath(property.CssPath, propertyNode); ok {
 				return val
 			}
 			return nil
@@ -311,7 +323,7 @@ func (j *Job) DoSave() *JobStats {
 			//get list element url page
 			//TODO: check if url is relative or absolute
 			//Exponential backoff using go backoff
-			if url, ok := stringValFromCssPath(j.JobSchema.CssPath, s); ok {
+			if url, ok := StringValFromCssPath(j.JobSchema.CssPath, s); ok {
 				url = removeInvalidUtf(stringMinifier(url))
 				url = strings.TrimPrefix(url, doc.Url.String())
 				url = doc.Url.Scheme + "://" + doc.Url.Host + "/" + strings.TrimPrefix(url, "/")
@@ -420,7 +432,7 @@ func (j *Job) ScrapeStream() (chan map[string]interface{}, error) {
 				//get list element url page
 				//TODO: check if url is relative or absolute
 				//Exponential backoff using go backoff
-				if url, ok := stringValFromCssPath(j.JobSchema.CssPath, s); ok {
+				if url, ok := StringValFromCssPath(j.JobSchema.CssPath, s); ok {
 					url = removeInvalidUtf(stringMinifier(url))
 					url = strings.TrimPrefix(url, doc.Url.String())
 					url = doc.Url.Scheme + "://" + doc.Url.Host + "/" + strings.TrimPrefix(url, "/")
