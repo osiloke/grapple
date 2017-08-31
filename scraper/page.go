@@ -49,7 +49,6 @@ func (p *PageScraper) getProperty(vm *otto.Otto, parentNode *goquery.Selection, 
 	} else {
 		propertyNode = parentNode.Find(path)
 	}
-	log.Info("parent node found property " + path + " = " + propertyNode.Text())
 	if propertyNode != nil {
 		switch property.Type {
 		case OBJECT_PROPERTY:

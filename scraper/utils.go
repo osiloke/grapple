@@ -13,7 +13,6 @@ import (
 
 // StringValFromCSSPath tries to get a string from a node
 func StringValFromCSSPath(path []string, node *goquery.Selection) (string, bool) {
-	log.WithField("path", path).Info("StringValFromCSSPath")
 	var val string
 	if len(path) == 1 {
 		val = node.Text()
