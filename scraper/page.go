@@ -201,6 +201,7 @@ func (p *PageScraper) ParseRow(data interface{}) (interface{}, error) {
 func SetRequestGetter(rg func(path string) *PageRequest) func(p *PageScraper) *PageScraper {
 	return func(p *PageScraper) *PageScraper {
 		p.requestGetter = rg
+		return p
 	}
 }
 
