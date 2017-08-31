@@ -1,7 +1,6 @@
 package scraper
 
 import (
-	"errors"
 	"runtime"
 	"time"
 
@@ -58,29 +57,36 @@ func (s *StreamRunner) Add(url string) bool {
 }
 
 //GetResult of a url
-func (s *StreamRunner) GetResult(url string) <-chan emitter.Event {
+func (s *StreamRunner) GetOneResult(url string) <-chan emitter.Event {
 	return s.emitter.Once(url + ":result")
 }
 
-//GetError of a url
-func (s *StreamRunner) GetError(url string) <-chan emitter.Event {
+//GetAllError of a url
+func (s *StreamRunner) GetAllError(url string) <-chan emitter.Event {
 	return s.emitter.Once(url + ":error")
 }
 
-// OneResult waits and returns a result or an error if a scrape request failed
-func (s *StreamRunner) OneResult(path string) (record map[string]interface{}, err error) {
+//GetAllResult of a url
+func (s *StreamRunner) GetAllResult(url string) <-chan emitter.Event {
+	return s.emitter.Once(url + ":result")
+}
+
+//GetOneError of a url
+func (s *StreamRunner) GetOneError(url string) <-chan emitter.Event {
+	return s.emitter.Once(url + ":error")
+}
+
+// AResult waits and returns a result or an error if a scrape request failed
+func (s *StreamRunner) AResult(path string) (record map[string]interface{}, err error) {
 OUTER:
 	for {
 		select {
-		case ev := <-s.GetError(path):
+		case ev := <-s.GetOneError(path):
 			err = ev.Args[0].(error)
 			break OUTER
-		case ev := <-s.GetResult(path):
+		case ev := <-s.GetOneResult(path):
 			vi := ev.Args[0].([]interface{})
-			if len(vi) == 1 {
-				record = vi[0].(map[string]interface{})
-			}
-			err = errors.New("domain not found")
+			record = vi[0].(map[string]interface{})
 			break OUTER
 		}
 	}
