@@ -3,6 +3,7 @@ package scraper
 import (
 	"bytes"
 	"errors"
+	"net/url"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -11,10 +12,25 @@ import (
 	dry "github.com/ungerik/go-dry"
 )
 
+// PageOpt page scraper options
+type PageOpt func(p *PageScraper) *PageScraper
+
+// PageRequest creates a request for a page
+type PageRequest struct {
+	URL    string
+	Method string
+	Params url.Values
+}
+
+var defaultRequestGetter = func(path string) *PageRequest {
+	return &PageRequest{URL: path, Method: "GET"}
+}
+
 // PageScraper scrapes an html page
 type PageScraper struct {
-	schema *Schema
-	con    Client
+	schema        *Schema
+	con           Client
+	requestGetter func(path string) *PageRequest
 }
 
 func (p *PageScraper) getProperty(vm *otto.Otto, parentNode *goquery.Selection, property *Schema) interface{} {
@@ -146,7 +162,8 @@ func (p *PageScraper) getProperty(vm *otto.Otto, parentNode *goquery.Selection, 
 
 // ScrapeURL get data from one url
 func (p *PageScraper) ScrapeURL(url string) ([]byte, error) {
-	return p.con.GetBytes(url)
+	req := p.requestGetter(url)
+	return p.con.GetBytes(req.URL)
 }
 
 // GetNextURL get rows using goquery
@@ -180,7 +197,18 @@ func (p *PageScraper) ParseRow(data interface{}) (interface{}, error) {
 	return nil, errors.New("not implemented")
 }
 
+// SetRequestGetter sets a request getter method for the scraper
+func SetRequestGetter(rg func(path string) *PageRequest) func(p *PageScraper) *PageScraper {
+	return func(p *PageScraper) *PageScraper {
+		p.requestGetter = rg
+	}
+}
+
 // NewPageScraper returns a new PageScraper
-func NewPageScraper(con Client, schema *Schema) *PageScraper {
-	return &PageScraper{schema, con}
+func NewPageScraper(con Client, schema *Schema, opts ...PageOpt) *PageScraper {
+	p := &PageScraper{schema: schema, con: con}
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p
 }
