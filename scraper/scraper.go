@@ -1,8 +1,8 @@
 package scraper
 
 type Scraper interface {
-	ScrapeUrl(string) ([]byte, error)
-	GetNextUrl(lastUtl string, data []byte) (string, error)
+	ScrapeURL(string) ([]byte, error)
+	GetNextURL(lastUtl string, data []byte) (string, error)
 	GetRows(data []byte) ([]interface{}, error)
 	ParseRow(data interface{}) (interface{}, error)
 }

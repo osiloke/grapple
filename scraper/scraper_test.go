@@ -2,11 +2,12 @@ package scraper
 
 import (
 	"bytes"
+	"testing"
+
 	"github.com/PuerkitoBio/goquery"
-	"github.com/osiloke/grapple/scraper/mocks"
+	"github.com/osiloke/grapple/mocks"
 	. "github.com/smartystreets/goconvey/convey"
 	. "github.com/stretchr/testify/mock"
-	"testing"
 )
 
 var testHtml = `
@@ -92,7 +93,7 @@ func TestScrapeStreamTable(t *testing.T) {
 `)
 		job := Job{
 			Name:      "example scraper",
-			Url:       "http://example.com",
+			URL:       "http://example.com",
 			JobSchema: testSchema,
 			StopOnFn:  nil,
 			Con:       &client,

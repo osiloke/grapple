@@ -9,12 +9,12 @@ package scraper
 
 type Runner struct {
 	url     string
-	lastUrl string
+	lastURL string
 	scraper Scraper
 }
 
 func (s *Runner) scrape(url string) (rows []interface{}, err error) {
-	data, err := s.scraper.ScrapeUrl(s.url)
+	data, err := s.scraper.ScrapeURL(s.url)
 	if err != nil {
 		return
 	}

@@ -2,19 +2,48 @@ package scraper
 
 import (
 	"encoding/json"
-	"log"
+	"regexp"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/apex/log"
 )
 
-func SchemaFromString(schema string) *Schema {
-	var job_schema Schema
-	if err := json.Unmarshal([]byte(schema), &job_schema); err != nil {
-		log.Println("Unable to load schema", "err", err)
+// StringValFromCSSPath tries to get a string from a node
+func StringValFromCSSPath(path []string, node *goquery.Selection) (string, bool) {
+	log.WithField("path", path).Info("StringValFromCSSPath")
+	var val string
+	if len(path) == 1 {
+		val = node.Text()
+	} else {
+		if v, ok := node.Attr(path[1]); ok {
+			val = v
+			if len(path) > 2 {
+				reg := path[2]
+				r, _ := regexp.Compile(reg)
+				m := r.FindStringSubmatch(val)
+				if len(m) > 1 {
+					val = m[1]
+				}
+			}
+		} else {
+			return "", false
+		}
+	}
+	val = stringMinifier(val)
+	return removeInvalidUtf(val), true
+}
+
+// SchemaFromString creates a schema from a json string
+func SchemaFromString(data string) *Schema {
+	var schema Schema
+	if err := json.Unmarshal([]byte(data), &schema); err != nil {
+		log.WithError(err).Error("Unable to load schema")
 		return nil
 	}
-	return &job_schema
+	return &schema
 }
 func removeInvalidUtf(s string) string {
 	if !utf8.ValidString(s) {

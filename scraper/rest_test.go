@@ -2,11 +2,12 @@ package scraper
 
 import (
 	"errors"
-	"git.progwebtech.com/osiloke/grapple/scraper/mocks"
-	. "github.com/smartystreets/goconvey/convey"
-	. "github.com/stretchr/testify/mock"
 	"net/url"
 	"testing"
+
+	"github.com/osiloke/grapple/mocks"
+	. "github.com/smartystreets/goconvey/convey"
+	. "github.com/stretchr/testify/mock"
 )
 
 func TestClientError(t *testing.T) {
@@ -16,7 +17,7 @@ func TestClientError(t *testing.T) {
 	Convey("create a rest scraper", t, func() {
 		s := NewRestScraper(&client)
 		Convey("then scrape url that fails", func() {
-			_, err := s.ScrapeUrl(URL("http://example.com/v1/json"))
+			_, err := s.ScrapeURL(URL("http://example.com/v1/json"))
 			Convey("this should return an err", func() {
 				So(err, ShouldEqual, failed)
 			})
@@ -24,7 +25,7 @@ func TestClientError(t *testing.T) {
 	})
 }
 
-func TestScrapeUrlWithEmptyData(t *testing.T) {
+func TestScrapeURLWithEmptyData(t *testing.T) {
 	// restData := []string{`
 	// 	{}
 	// `}
@@ -33,7 +34,7 @@ func TestScrapeUrlWithEmptyData(t *testing.T) {
 	Convey("create a rest scraper", t, func() {
 		s := NewRestScraper(&client)
 		Convey("then scrape url that has no data", func() {
-			_, err := s.ScrapeUrl(URL("http://example.com/v1/json"))
+			_, err := s.ScrapeURL(URL("http://example.com/v1/json"))
 			Convey("this should return an ErrNoData", func() {
 				So(err, ShouldEqual, ErrNoData)
 			})
@@ -41,14 +42,14 @@ func TestScrapeUrlWithEmptyData(t *testing.T) {
 	})
 }
 
-func TestScrapeUrlWithData(t *testing.T) {
+func TestScrapeURLWithData(t *testing.T) {
 	restData := `{"name":"val"}`
 	client := mocks.Client{}
 	client.On("GetBytes", AnythingOfType("string")).Return([]byte(restData), nil)
 	Convey("create a rest scraper", t, func() {
 		s := NewRestScraper(&client)
 		Convey("then scrape url that has data", func() {
-			data, _ := s.ScrapeUrl(URL("http://example.com/v1/json"))
+			data, _ := s.ScrapeURL(URL("http://example.com/v1/json"))
 			Convey("this should return some data", func() {
 				So(string(data), ShouldEqual, restData)
 			})
@@ -56,7 +57,7 @@ func TestScrapeUrlWithData(t *testing.T) {
 	})
 }
 
-func TestNoNextUrl(t *testing.T) {
+func TestNoNextURL(t *testing.T) {
 	restPages := map[string]string{
 		"http://example.com/v1/json":     `{"total":3, "data":[{"name":"one"},{"name":"two"},{"name":"three"}]}`,
 		"http://example.com/v1/json?p=2": `{"total":3, "data":[{"name":"four"},{"name":"five"},{"name":"siz"}]}`,
@@ -68,15 +69,15 @@ func TestNoNextUrl(t *testing.T) {
 	Convey("create a rest scraper", t, func() {
 		s := NewRestScraper(&client)
 		Convey("then get next url ", func() {
-			_, err := s.NextUrl(nil, nil)
+			_, err := s.NextURL(nil, nil)
 			Convey("then get next url", func() {
-				So(err, ShouldEqual, ErrNoNextUrl)
+				So(err, ShouldEqual, ErrNoNextURL)
 			})
 		})
 	})
 }
 
-func TestNextUrl(t *testing.T) {
+func TestNextURL(t *testing.T) {
 	restPages := map[string]string{
 		"http://example.com/v1/json":     `{"total":3, "data":[{"name":"one"},{"name":"two"},{"name":"three"}]}`,
 		"http://example.com/v1/json?p=2": `{"total":3, "data":[{"name":"four"},{"name":"five"},{"name":"siz"}]}`,
@@ -88,14 +89,14 @@ func TestNextUrl(t *testing.T) {
 	Convey("create a rest scraper", t, func() {
 		s := NewRestScraper(
 			&client,
-			NextUrl(func(lastUrl *url.URL, data Data) (string, error) {
+			NextURL(func(lastURL *url.URL, data Data) (string, error) {
 				return "http://example.com/v1/json?p=2", nil
 			}),
 		)
 		Convey("then get next url ", func() {
-			nextUrl, _ := s.NextUrl(nil, nil)
+			nextURL, _ := s.NextURL(nil, nil)
 			Convey("then get next url", func() {
-				So(nextUrl, ShouldEqual, "http://example.com/v1/json?p=2")
+				So(nextURL, ShouldEqual, "http://example.com/v1/json?p=2")
 			})
 		})
 	})
@@ -118,7 +119,7 @@ func TestParseData(t *testing.T) {
 			}),
 		)
 		Convey("scrape url", func() {
-			data, _ := s.ScrapeUrl(URL("http://example.com/v1/json"))
+			data, _ := s.ScrapeURL(URL("http://example.com/v1/json"))
 			Convey("then parse data", func() {
 				edata, _ := s.ParseData(data)
 				Convey("then parsed data should be an instance of JSONData", func() {
@@ -207,7 +208,7 @@ func TestRowCount(t *testing.T) {
 			}),
 		)
 		Convey("scrape url", func() {
-			data, _ := s.ScrapeUrl(URL("http://example.com/v1/json"))
+			data, _ := s.ScrapeURL(URL("http://example.com/v1/json"))
 			Convey("then parse data", func() {
 				edata, _ := s.ParseData(data)
 				Convey("then get total count from data", func() {
@@ -242,7 +243,7 @@ func TestGetRows(t *testing.T) {
 			}),
 		)
 		Convey("scrape url", func() {
-			data, _ := s.ScrapeUrl(URL("http://example.com/v1/json"))
+			data, _ := s.ScrapeURL(URL("http://example.com/v1/json"))
 			Convey("then parse data", func() {
 				edata, _ := s.ParseData(data)
 				Convey("then get total count from data", func() {
@@ -280,7 +281,7 @@ func TestParseRow(t *testing.T) {
 			}),
 		)
 		Convey("scrape url", func() {
-			data, _ := s.ScrapeUrl(URL("http://example.com/v1/json"))
+			data, _ := s.ScrapeURL(URL("http://example.com/v1/json"))
 			Convey("then parse data", func() {
 				edata, _ := s.ParseData(data)
 				rows, _ := s.Rows(edata)
@@ -302,7 +303,7 @@ func TestEchoDataGet(t *testing.T) {
 	})
 }
 
-func TestJSONRestScraperNextUrl(t *testing.T) {
+func TestJSONRestScraperNextURL(t *testing.T) {
 	url1 := "http://example.com/v1/json?p=1"
 	url2 := "http://example.com/v1/json?p=2"
 	restPages := map[string]string{
@@ -323,16 +324,16 @@ func TestJSONRestScraperNextUrl(t *testing.T) {
 		url, _ := url.Parse(url1)
 		Convey("scrape a url", func() {
 
-			data, _ := s.ScrapeUrl(URL(url1))
+			data, _ := s.ScrapeURL(URL(url1))
 			Convey("parse data retrieved", func() {
 				edata, _ := s.ParseData(data)
 				Convey("then get next url ", func() {
-					nextUrl, err := s.NextUrl(url, edata)
+					nextURL, err := s.NextURL(url, edata)
 					if err != nil {
 						Println(err)
 					}
 					Convey("then get next url", func() {
-						So(nextUrl, ShouldEqual, url2)
+						So(nextURL, ShouldEqual, url2)
 					})
 				})
 			})

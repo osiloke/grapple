@@ -9,7 +9,7 @@ import (
 	. "github.com/cstockton/go-conv"
 )
 
-var ErrNoNextUrl = errors.New("no next url")
+var ErrNoNextURL = errors.New("no next url")
 var ErrNoRows = errors.New("no rows")
 var ErrNoData = errors.New("no data")
 
@@ -29,10 +29,10 @@ func ParseData(val func(data []byte) (Data, error)) func(*RestScraper) error {
 	}
 }
 
-//NextUrl is a function which generates a new url to scrape next
-func NextUrl(val func(lastUrl *url.URL, data Data) (string, error)) func(*RestScraper) error {
+//NextURL is a function which generates a new url to scrape next
+func NextURL(val func(lastURL *url.URL, data Data) (string, error)) func(*RestScraper) error {
 	return func(r *RestScraper) error {
-		r.nextUrl = val
+		r.nextURL = val
 		return nil
 	}
 }
@@ -61,7 +61,7 @@ func GetRows(val func(data Data) ([]interface{}, error)) func(*RestScraper) erro
 
 //rest scraper
 type RestScraper struct {
-	nextUrl      func(lastUrl *url.URL, data Data) (string, error)
+	nextURL      func(lastURL *url.URL, data Data) (string, error)
 	rowCount     func(data Data) (int, error)
 	parseData    func(data []byte) (Data, error)
 	getRows      func(data Data) ([]interface{}, error)
@@ -75,7 +75,7 @@ func URL(u string) *url.URL {
 	url, _ := url.Parse(u)
 	return url
 }
-func (s *RestScraper) ScrapeUrl(url *url.URL) (data []byte, err error) {
+func (s *RestScraper) ScrapeURL(url *url.URL) (data []byte, err error) {
 	data, err = s.client.GetBytes(url.String())
 	if err != nil {
 		return
@@ -90,8 +90,8 @@ func (s *RestScraper) ScrapeUrl(url *url.URL) (data []byte, err error) {
 func (s *RestScraper) ParseData(data []byte) (Data, error) {
 	return s.parseData(data)
 }
-func (s *RestScraper) NextUrl(lastUrl *url.URL, data Data) (string, error) {
-	return s.nextUrl(lastUrl, data)
+func (s *RestScraper) NextURL(lastURL *url.URL, data Data) (string, error) {
+	return s.nextURL(lastURL, data)
 }
 
 func (s *RestScraper) Rows(data Data) ([]interface{}, error) {
@@ -111,8 +111,8 @@ func NewRestScraper(client Client, options ...func(*RestScraper) error) *RestScr
 		client:       client,
 		scrapeLimit:  1,
 		scrapedCount: 0,
-		nextUrl: func(lastUrl *url.URL, data Data) (string, error) {
-			return "", ErrNoNextUrl
+		nextURL: func(lastURL *url.URL, data Data) (string, error) {
+			return "", ErrNoNextURL
 		},
 		parseRow: func(data interface{}) (interface{}, error) {
 			return nil, ErrNoRows
@@ -133,7 +133,7 @@ func NewRestScraper(client Client, options ...func(*RestScraper) error) *RestScr
 	return &r
 }
 
-func NewJSONRestScraper(client Client, nextUrlTemplate, rowCountPath, dataPath string) *RestScraper {
+func NewJSONRestScraper(client Client, nextURLTemplate, rowCountPath, dataPath string) *RestScraper {
 	t := template.New("nexturl")
 	fmap := template.FuncMap{
 		"param": func(url *url.URL, key string) string {
@@ -160,24 +160,24 @@ func NewJSONRestScraper(client Client, nextUrlTemplate, rowCountPath, dataPath s
 		},
 	}
 	t.Funcs(fmap)
-	tpl, err := t.Parse(nextUrlTemplate)
+	tpl, err := t.Parse(nextURLTemplate)
 	if err != nil {
 		panic(err)
 	}
 	return &RestScraper{
 		client:      client,
 		scrapeLimit: 1,
-		nextUrl: func(lastUrl *url.URL, data Data) (string, error) {
+		nextURL: func(lastURL *url.URL, data Data) (string, error) {
 			var _url bytes.Buffer
 			if err := tpl.Execute(&_url, map[string]interface{}{
 				"data": data,
-				"url":  lastUrl,
+				"url":  lastURL,
 			}); err != nil {
 				return "", err
 			}
 			url := _url.String()
 			if url == "" {
-				return "", ErrNoNextUrl
+				return "", ErrNoNextURL
 			}
 			return url, nil
 		},
