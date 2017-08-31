@@ -2,6 +2,7 @@ package scraper
 
 import (
 	"runtime"
+	"time"
 
 	"github.com/olebedev/emitter"
 )
@@ -14,16 +15,31 @@ type StreamRunner struct {
 }
 
 func (s *StreamRunner) worker(id int, urls <-chan string) {
+	var done chan struct{}
 	for url := range urls {
 		res, err := s.scraper.ScrapeURL(url)
 		if err == nil {
 			rows, err := s.scraper.GetRows(res)
 			if err == nil {
-				<-s.emitter.Emit(url+":result", rows)
+				done = s.emitter.Emit(url+":result", rows)
+				select {
+				case <-done:
+					// so the sending is done
+				case <-time.After(5):
+					// time is out, let's discard emitting
+					close(done)
+				}
 				continue
 			}
 		}
-		<-s.emitter.Emit(url+":error", err)
+		done = s.emitter.Emit(url+":error", err)
+		select {
+		case <-done:
+			// so the sending is done
+		case <-time.After(5):
+			// time is out, let's discard emitting
+			close(done)
+		}
 	}
 }
 
@@ -42,12 +58,12 @@ func (s *StreamRunner) Add(url string) bool {
 
 //GetResult of a url
 func (s *StreamRunner) GetResult(url string) <-chan emitter.Event {
-	return s.emitter.On(url + ":result")
+	return s.emitter.Once(url + ":result")
 }
 
 //GetError of a url
 func (s *StreamRunner) GetError(url string) <-chan emitter.Event {
-	return s.emitter.On(url + ":error")
+	return s.emitter.Once(url + ":error")
 }
 
 //Close runner

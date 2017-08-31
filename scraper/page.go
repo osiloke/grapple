@@ -163,6 +163,9 @@ func (p *PageScraper) getProperty(vm *otto.Otto, parentNode *goquery.Selection, 
 // ScrapeURL get data from one url
 func (p *PageScraper) ScrapeURL(url string) ([]byte, error) {
 	req := p.requestGetter(url)
+	if req.Method == "POST" {
+		return p.con.PostBytes(req.URL, req.Params)
+	}
 	return p.con.GetBytes(req.URL)
 }
 
