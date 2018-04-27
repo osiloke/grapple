@@ -135,7 +135,8 @@ func (c *DefaultClient) PostBytes(url string, form url.Values) ([]byte, error) {
 func (c *DefaultClient) Get(url string) (*http.Response, error) {
 	retry := c.Retry
 	for {
-		if req, err := http.NewRequest("GET", url, nil); err == nil {
+		req, err := http.NewRequest("GET", url, nil)
+		if err == nil {
 			req.Header.Add("User-Agent", `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.27 Safari/537.36`)
 			resp, err := c.Client.Do(req)
 			if err != nil {
@@ -147,12 +148,10 @@ func (c *DefaultClient) Get(url string) (*http.Response, error) {
 			}
 			if resp.StatusCode == 200 {
 				return resp, nil
-			} else {
-				return nil, HTTPError{resp.StatusCode}
 			}
-		} else {
-			return nil, err
+			return nil, HTTPError{resp.StatusCode}
 		}
+		return nil, err
 	}
 }
 
@@ -166,14 +165,13 @@ func (c *DefaultClient) GetBytes(url string) ([]byte, error) {
 			}
 			retry--
 			continue
-		} else {
-			defer resp.Body.Close()
-			contents, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
-			}
-			return contents, nil
 		}
+		defer resp.Body.Close()
+		contents, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+		return contents, nil
 	}
 }
 
@@ -190,10 +188,9 @@ func (c *DefaultClient) GetDoc(url string) (*goquery.Document, error) {
 	defer resp.Body.Close()
 	if resp.StatusCode == 200 {
 		return goquery.NewDocumentFromResponse(resp)
-	} else {
-		b, _ := ioutil.ReadAll(resp.Body)
-		return nil, errors.New("unable to retrieve doc " + resp.Status + " " + string(b))
 	}
+	b, _ := ioutil.ReadAll(resp.Body)
+	return nil, errors.New("unable to retrieve doc " + resp.Status + " " + string(b))
 }
 
 func (c *DefaultClient) GetFind(url string, selector string) (*goquery.Selection, error) {

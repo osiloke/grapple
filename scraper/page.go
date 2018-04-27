@@ -209,7 +209,7 @@ func SetRequestGetter(rg func(path string) *PageRequest) func(p *PageScraper) *P
 
 // NewPageScraper returns a new PageScraper
 func NewPageScraper(con Client, schema *Schema, opts ...PageOpt) *PageScraper {
-	p := &PageScraper{schema: schema, con: con}
+	p := &PageScraper{schema: schema, con: con, requestGetter: defaultRequestGetter}
 	for _, opt := range opts {
 		opt(p)
 	}
